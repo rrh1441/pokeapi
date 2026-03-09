@@ -1,4 +1,4 @@
-import { sql } from './db'
+import { getDb } from './db'
 
 export interface Card {
   tcgdex_id: string
@@ -26,6 +26,7 @@ export interface SearchParams {
 }
 
 export async function searchCards(params: SearchParams): Promise<{ cards: Card[]; total: number }> {
+  const sql = getDb()
   const { query, set, rarity, number, limit = 10 } = params
 
   const conditions: string[] = []
@@ -74,11 +75,13 @@ export async function searchCards(params: SearchParams): Promise<{ cards: Card[]
 }
 
 export async function getCardById(id: string): Promise<Card | null> {
+  const sql = getDb()
   const result = await sql`SELECT * FROM tcgdex_cards WHERE tcgdex_id = ${id} LIMIT 1`
   return (result[0] as Card) || null
 }
 
 export async function getAllSets(): Promise<string[]> {
+  const sql = getDb()
   const result = await sql`
     SELECT DISTINCT set_name
     FROM tcgdex_cards
@@ -89,6 +92,7 @@ export async function getAllSets(): Promise<string[]> {
 }
 
 export async function getAllRarities(): Promise<string[]> {
+  const sql = getDb()
   const result = await sql`
     SELECT DISTINCT rarity
     FROM tcgdex_cards
