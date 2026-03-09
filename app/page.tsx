@@ -19,11 +19,12 @@ export default function Home() {
   const [cardNumber, setCardNumber] = useState('')
   const [cards, setCards] = useState<Card[]>([])
   const [total, setTotal] = useState(0)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [sets, setSets] = useState<string[]>([])
   const [rarities, setRarities] = useState<string[]>([])
   const [selectedCard, setSelectedCard] = useState<Card | null>(null)
   const [searchCount, setSearchCount] = useState(0)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const stored = localStorage.getItem(SEARCH_COUNT_KEY)
@@ -52,6 +53,7 @@ export default function Home() {
 
   const searchCards = useCallback(async () => {
     setIsLoading(true)
+    setError(null)
     try {
       const params = new URLSearchParams()
       if (query) params.set('q', query)
@@ -61,14 +63,23 @@ export default function Home() {
 
       const res = await fetch(`/api/cards/search?${params}`)
       const data = await res.json()
+
+      if (data.error) {
+        setError(data.error)
+        setCards([])
+        setTotal(0)
+        return
+      }
+
       setCards(data.cards || [])
       setTotal(data.total || 0)
 
       const newCount = searchCount + 1
       setSearchCount(newCount)
       localStorage.setItem(SEARCH_COUNT_KEY, newCount.toString())
-    } catch (error) {
-      console.error('Search failed:', error)
+    } catch (err) {
+      console.error('Search failed:', err)
+      setError(err instanceof Error ? err.message : 'Search failed')
       setCards([])
       setTotal(0)
     } finally {
@@ -132,7 +143,10 @@ export default function Home() {
         </div>
 
         <div className="mb-4 text-sm text-muted-foreground">
-          {!isLoading && total > 0 && (
+          {error && (
+            <div className="text-red-500 mb-2">Error: {error}</div>
+          )}
+          {!isLoading && !error && total > 0 && (
             <span>{total.toLocaleString()} cards found</span>
           )}
         </div>
