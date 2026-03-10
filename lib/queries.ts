@@ -22,7 +22,89 @@ export interface SearchParams {
   set?: string
   rarity?: string
   number?: string
+  holo?: 'holo' | 'reverse' | 'non-holo'
   limit?: number
+}
+
+interface ParsedQuery {
+  name: string | null
+  number: string | null
+  holo: 'holo' | 'reverse' | 'non-holo' | null
+  rarity: string | null
+}
+
+// Known rarities for extraction from query
+const KNOWN_RARITIES = [
+  'rare holo', 'rare', 'common', 'uncommon', 'promo',
+  'ultra rare', 'secret rare', 'amazing rare', 'illustration rare',
+  'special art rare', 'hyper rare', 'radiant rare'
+]
+
+/**
+ * Parse a search query to extract structured components:
+ * - Card numbers like "125/094", "125", "#125", "/094"
+ * - Holo keywords: "holo", "reverse holo", "reverse", "non-holo", "nonholo"
+ * - Rarity keywords
+ * - Remaining text as the Pokemon name
+ */
+function parseSearchQuery(query: string): ParsedQuery {
+  let remaining = query.toLowerCase().trim()
+  let number: string | null = null
+  let holo: 'holo' | 'reverse' | 'non-holo' | null = null
+  let rarity: string | null = null
+
+  // Extract card numbers: "125/094", "125", "#125", "/094"
+  // Match patterns like: 125/094, #125, 125, /094
+  const numberPatterns = [
+    /\b(\d{1,4})\s*\/\s*(\d{1,4})\b/,  // 125/094
+    /#(\d{1,4})\b/,                      // #125
+    /\b(\d{1,4})$/,                      // number at end
+    /\/(\d{1,4})\b/                      // /094
+  ]
+
+  for (const pattern of numberPatterns) {
+    const match = remaining.match(pattern)
+    if (match) {
+      // For "125/094" format, use the first number as local_id
+      if (pattern === numberPatterns[0]) {
+        number = match[1]
+      } else {
+        number = match[1]
+      }
+      remaining = remaining.replace(match[0], ' ').trim()
+      break
+    }
+  }
+
+  // Extract holo keywords (check longer phrases first)
+  if (/\b(reverse\s*holo|reverseholo)\b/.test(remaining)) {
+    holo = 'reverse'
+    remaining = remaining.replace(/\b(reverse\s*holo|reverseholo)\b/, ' ').trim()
+  } else if (/\b(non-?holo|nonholo)\b/.test(remaining)) {
+    holo = 'non-holo'
+    remaining = remaining.replace(/\b(non-?holo|nonholo)\b/, ' ').trim()
+  } else if (/\bholo\b/.test(remaining)) {
+    holo = 'holo'
+    remaining = remaining.replace(/\bholo\b/, ' ').trim()
+  } else if (/\breverse\b/.test(remaining)) {
+    holo = 'reverse'
+    remaining = remaining.replace(/\breverse\b/, ' ').trim()
+  }
+
+  // Extract rarity keywords (check longer phrases first)
+  for (const r of KNOWN_RARITIES) {
+    const rarityRegex = new RegExp(`\\b${r.replace(/\s+/g, '\\s+')}\\b`, 'i')
+    if (rarityRegex.test(remaining)) {
+      rarity = r
+      remaining = remaining.replace(rarityRegex, ' ').trim()
+      break
+    }
+  }
+
+  // Clean up remaining text (the Pokemon name)
+  const name = remaining.replace(/\s+/g, ' ').trim() || null
+
+  return { name, number, holo, rarity }
 }
 
 // Popular Pokemon to feature when no search query
@@ -34,20 +116,24 @@ const FEATURED_POKEMON = [
 
 export async function searchCards(params: SearchParams): Promise<{ cards: Card[]; total: number }> {
   const sql = getDb()
-  const { query, set, rarity, number, limit = 10 } = params
+  const { query, set, rarity, number, holo, limit = 10 } = params
 
   // If no search params, show featured/popular cards
-  if (!query && !set && !rarity && !number) {
+  if (!query && !set && !rarity && !number && !holo) {
     return getFeaturedCards(limit)
   }
+
+  // Parse the query to extract name, number, holo, and rarity
+  const parsed = query ? parseSearchQuery(query) : { name: null, number: null, holo: null, rarity: null }
 
   const conditions: string[] = []
   const values: (string | number)[] = []
   let paramIndex = 1
 
-  if (query) {
+  // Use parsed name from query (the Pokemon name after extracting other components)
+  if (parsed.name) {
     conditions.push(`name_lower LIKE $${paramIndex}`)
-    values.push(`%${query.toLowerCase()}%`)
+    values.push(`%${parsed.name}%`)
     paramIndex++
   }
 
@@ -57,16 +143,33 @@ export async function searchCards(params: SearchParams): Promise<{ cards: Card[]
     paramIndex++
   }
 
-  if (rarity) {
-    conditions.push(`rarity = $${paramIndex}`)
-    values.push(rarity)
+  // Use rarity from params, or fall back to parsed rarity from query
+  const effectiveRarity = rarity || parsed.rarity
+  if (effectiveRarity) {
+    // Use case-insensitive LIKE for rarity to be more flexible
+    conditions.push(`LOWER(rarity) LIKE $${paramIndex}`)
+    values.push(`%${effectiveRarity.toLowerCase()}%`)
     paramIndex++
   }
 
-  if (number) {
+  // Use number from params, or fall back to parsed number from query
+  const effectiveNumber = number || parsed.number
+  if (effectiveNumber) {
     conditions.push(`local_id = $${paramIndex}`)
-    values.push(number)
+    values.push(effectiveNumber)
     paramIndex++
+  }
+
+  // Use holo from params, or fall back to parsed holo from query
+  const effectiveHolo = holo || parsed.holo
+  if (effectiveHolo) {
+    if (effectiveHolo === 'holo') {
+      conditions.push(`has_holo = 1`)
+    } else if (effectiveHolo === 'reverse') {
+      conditions.push(`has_reverse = 1`)
+    } else if (effectiveHolo === 'non-holo') {
+      conditions.push(`has_holo = 0 AND has_reverse = 0`)
+    }
   }
 
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
