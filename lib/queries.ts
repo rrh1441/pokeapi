@@ -29,6 +29,7 @@ export interface SearchParams {
 interface ParsedQuery {
   name: string | null
   number: string | null
+  setTotal: string | null  // The second number in "125/094" format - helps identify the set
   holo: 'holo' | 'reverse' | 'non-holo' | null
   rarity: string | null
 }
@@ -50,29 +51,34 @@ const KNOWN_RARITIES = [
 function parseSearchQuery(query: string): ParsedQuery {
   let remaining = query.toLowerCase().trim()
   let number: string | null = null
+  let setTotal: string | null = null
   let holo: 'holo' | 'reverse' | 'non-holo' | null = null
   let rarity: string | null = null
 
   // Extract card numbers: "125/094", "125", "#125", "/094"
-  // Match patterns like: 125/094, #125, 125, /094
-  const numberPatterns = [
-    /\b(\d{1,4})\s*\/\s*(\d{1,4})\b/,  // 125/094
-    /#(\d{1,4})\b/,                      // #125
-    /\b(\d{1,4})$/,                      // number at end
-    /\/(\d{1,4})\b/                      // /094
-  ]
+  // For "125/094" format: first number is card number, second is set total
+  const slashPattern = /\b(\d{1,4})\s*\/\s*(\d{1,4})\b/
+  const slashMatch = remaining.match(slashPattern)
 
-  for (const pattern of numberPatterns) {
-    const match = remaining.match(pattern)
-    if (match) {
-      // For "125/094" format, use the first number as local_id
-      if (pattern === numberPatterns[0]) {
+  if (slashMatch) {
+    number = slashMatch[1]
+    setTotal = slashMatch[2]
+    remaining = remaining.replace(slashMatch[0], ' ').trim()
+  } else {
+    // Try other patterns
+    const otherPatterns = [
+      /#(\d{1,4})\b/,    // #125
+      /\b(\d{1,4})$/,    // number at end
+      /\/(\d{1,4})\b/    // /094
+    ]
+
+    for (const pattern of otherPatterns) {
+      const match = remaining.match(pattern)
+      if (match) {
         number = match[1]
-      } else {
-        number = match[1]
+        remaining = remaining.replace(match[0], ' ').trim()
+        break
       }
-      remaining = remaining.replace(match[0], ' ').trim()
-      break
     }
   }
 
@@ -104,7 +110,7 @@ function parseSearchQuery(query: string): ParsedQuery {
   // Clean up remaining text (the Pokemon name)
   const name = remaining.replace(/\s+/g, ' ').trim() || null
 
-  return { name, number, holo, rarity }
+  return { name, number, setTotal, holo, rarity }
 }
 
 // Popular Pokemon to feature when no search query
@@ -123,8 +129,8 @@ export async function searchCards(params: SearchParams): Promise<{ cards: Card[]
     return getFeaturedCards(limit)
   }
 
-  // Parse the query to extract name, number, holo, and rarity
-  const parsed = query ? parseSearchQuery(query) : { name: null, number: null, holo: null, rarity: null }
+  // Parse the query to extract name, number, setTotal, holo, and rarity
+  const parsed = query ? parseSearchQuery(query) : { name: null, number: null, setTotal: null, holo: null, rarity: null }
 
   const conditions: string[] = []
   const values: (string | number)[] = []
@@ -158,6 +164,22 @@ export async function searchCards(params: SearchParams): Promise<{ cards: Card[]
     conditions.push(`local_id = $${paramIndex}`)
     values.push(effectiveNumber)
     paramIndex++
+  }
+
+  // If setTotal is provided (from "125/094" format), filter to sets with matching card count
+  // This helps distinguish between cards with same number in different sets
+  if (parsed.setTotal) {
+    const setTotalNum = parseInt(parsed.setTotal, 10)
+    // Use a subquery to find sets where max numeric local_id is close to the setTotal
+    // Allow some tolerance since secret rares can exceed the printed total
+    conditions.push(`set_name IN (
+      SELECT set_name FROM tcgdex_cards
+      WHERE local_id ~ '^[0-9]+$'
+      GROUP BY set_name
+      HAVING MAX(CAST(local_id AS INTEGER)) BETWEEN $${paramIndex} AND $${paramIndex + 1}
+    )`)
+    values.push(setTotalNum - 5, setTotalNum + 50)  // Allow secret rares to go over
+    paramIndex += 2
   }
 
   // Use holo from params, or fall back to parsed holo from query
