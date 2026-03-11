@@ -31,6 +31,7 @@ export function SearchPage({ initialCards, initialTotal, sets, rarities }: Searc
   const [searchCount, setSearchCount] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [hasSearched, setHasSearched] = useState(false)
+  const [searchComplete, setSearchComplete] = useState(true) // Track if current search is done
 
   useEffect(() => {
     const stored = localStorage.getItem(SEARCH_COUNT_KEY)
@@ -41,6 +42,7 @@ export function SearchPage({ initialCards, initialTotal, sets, rarities }: Searc
 
   const searchCards = useCallback(async () => {
     setIsLoading(true)
+    setSearchComplete(false)
     setError(null)
     try {
       const params = new URLSearchParams()
@@ -72,6 +74,7 @@ export function SearchPage({ initialCards, initialTotal, sets, rarities }: Searc
       setTotal(0)
     } finally {
       setIsLoading(false)
+      setSearchComplete(true)
     }
   }, [query, selectedSet, selectedRarity, cardNumber, searchCount])
 
@@ -111,7 +114,7 @@ export function SearchPage({ initialCards, initialTotal, sets, rarities }: Searc
           <SearchInput
             value={query}
             onChange={setQuery}
-            placeholder="Search by name, number (e.g., Charizard 125/094), holo, rarity..."
+            placeholder="Search by name, number, holo, rarity (e.g., Charizard holo, Pikachu 58/102)..."
           />
           <FilterDropdowns
             sets={sets}
@@ -146,6 +149,7 @@ export function SearchPage({ initialCards, initialTotal, sets, rarities }: Searc
         <CardGrid
           cards={cards}
           isLoading={isLoading}
+          searchComplete={searchComplete}
           onCardClick={setSelectedCard}
         />
 

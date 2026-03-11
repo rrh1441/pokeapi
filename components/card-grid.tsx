@@ -7,10 +7,12 @@ import { Skeleton } from '@/components/ui/skeleton'
 interface CardGridProps {
   cards: Card[]
   isLoading: boolean
+  searchComplete?: boolean // Only show "no results" when search is truly complete
   onCardClick: (card: Card) => void
 }
 
-export function CardGrid({ cards, isLoading, onCardClick }: CardGridProps) {
+export function CardGrid({ cards, isLoading, searchComplete = true, onCardClick }: CardGridProps) {
+  // Show skeletons when loading
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -26,12 +28,18 @@ export function CardGrid({ cards, isLoading, onCardClick }: CardGridProps) {
     )
   }
 
-  if (cards.length === 0) {
+  // Only show empty state when search is complete and we have no results
+  if (cards.length === 0 && searchComplete) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">No cards found. Try a different search.</p>
+        <p className="text-muted-foreground">No matching cards found. Try adjusting your search.</p>
       </div>
     )
+  }
+
+  // If cards is empty but search isn't complete, show nothing (transitioning)
+  if (cards.length === 0) {
+    return null
   }
 
   return (
