@@ -1,0 +1,146 @@
+{
+  "sold_listings_response": {
+    "description": "Response from GET/POST /sold endpoint",
+    "example": {
+      "query": "PSA 10 Charizard Base Set",
+      "count": 15,
+      "listings": [
+        {
+          "title": "PSA 10 GEM MINT 1999 Pokemon Base Set Charizard #4 Holo Rare",
+          "price": 8500.00,
+          "url": "https://www.ebay.com/itm/123456789",
+          "image_url": "https://i.ebayimg.com/images/g/abc123/s-l500.jpg",
+          "ebay_item_id": "123456789",
+          "sold_date": "2024-03-08",
+          "bids": null
+        },
+        {
+          "title": "1999 Pokemon Base Set Charizard Holo #4 PSA 10 GEM MINT",
+          "price": 7800.00,
+          "url": "https://www.ebay.com/itm/987654321",
+          "image_url": "https://i.ebayimg.com/images/g/def456/s-l500.jpg",
+          "ebay_item_id": "987654321",
+          "sold_date": "2024-03-07",
+          "bids": null
+        },
+        {
+          "title": "Pokemon Charizard Base Set PSA 10 Gem Mint #4 Holo 1999",
+          "price": 9200.00,
+          "url": "https://www.ebay.com/itm/456789123",
+          "image_url": "https://i.ebayimg.com/images/g/ghi789/s-l500.jpg",
+          "ebay_item_id": "456789123",
+          "sold_date": "2024-03-05",
+          "bids": null
+        }
+      ],
+      "stats": {
+        "median_price": 8500.00,
+        "avg_price": 8500.00,
+        "min_price": 7800.00,
+        "max_price": 9200.00,
+        "count": 15
+      },
+      "scraped_at": "2024-03-10T14:30:00.000Z"
+    }
+  },
+  "active_listings_response": {
+    "description": "Response from GET/POST /active endpoint",
+    "example": {
+      "query": "Nintendo Switch OLED",
+      "count": 25,
+      "listings": [
+        {
+          "title": "Nintendo Switch OLED Model - White - NEW SEALED",
+          "price": 299.99,
+          "url": "https://www.ebay.com/itm/111222333",
+          "image_url": "https://i.ebayimg.com/images/g/jkl012/s-l500.jpg",
+          "ebay_item_id": "111222333",
+          "sold_date": null,
+          "bids": null,
+          "time_left": null
+        },
+        {
+          "title": "Nintendo Switch OLED Model Bundle w/ Games - MINT",
+          "price": 275.00,
+          "url": "https://www.ebay.com/itm/444555666",
+          "image_url": "https://i.ebayimg.com/images/g/mno345/s-l500.jpg",
+          "ebay_item_id": "444555666",
+          "sold_date": null,
+          "bids": "12 bids",
+          "time_left": "2h 15m"
+        },
+        {
+          "title": "Nintendo Switch OLED White 64GB Console Only",
+          "price": 245.00,
+          "url": "https://www.ebay.com/itm/777888999",
+          "image_url": "https://i.ebayimg.com/images/g/pqr678/s-l500.jpg",
+          "ebay_item_id": "777888999",
+          "sold_date": null,
+          "bids": "8 bids",
+          "time_left": "5h 42m"
+        }
+      ],
+      "scraped_at": "2024-03-10T14:35:00.000Z"
+    }
+  },
+  "sold_listings_request": {
+    "description": "Request body for POST /sold endpoint",
+    "example": {
+      "query": "PSA 10 Charizard Base Set",
+      "min_price": 5000,
+      "max_price": 15000,
+      "limit": 50,
+      "category": null
+    }
+  },
+  "active_listings_request": {
+    "description": "Request body for POST /active endpoint",
+    "example": {
+      "query": "Nintendo Switch OLED",
+      "min_price": 200,
+      "max_price": 400,
+      "limit": 30,
+      "category": null,
+      "listing_type": "buy_it_now"
+    }
+  },
+  "error_responses": {
+    "unauthorized": {
+      "status_code": 401,
+      "body": {
+        "detail": "Invalid or missing API key"
+      }
+    },
+    "rate_limited": {
+      "status_code": 429,
+      "body": {
+        "detail": "Rate limit exceeded. Please wait before making more requests."
+      }
+    },
+    "validation_error": {
+      "status_code": 422,
+      "body": {
+        "detail": [
+          {
+            "loc": ["body", "query"],
+            "msg": "field required",
+            "type": "value_error.missing"
+          }
+        ]
+      }
+    },
+    "server_error": {
+      "status_code": 500,
+      "body": {
+        "detail": "Scraping failed: Connection timeout"
+      }
+    }
+  },
+  "health_check_response": {
+    "description": "Response from GET /health endpoint",
+    "example": {
+      "status": "ok",
+      "timestamp": "2024-03-10T14:30:00.000Z"
+    }
+  }
+}
