@@ -1,0 +1,26 @@
+# Robots.txt for Pokemon Card API
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://pokecardapi.com/sitemap.xml
+
+# Allow AI crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+# LLMs.txt for AI discoverability
+# See: /llms.txt

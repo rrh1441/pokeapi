@@ -145,16 +145,16 @@ Reference the existing scraper at /Users/ryanheger/pokeapi/scraper/scraper.py fo
 
 ### Agent Tasks
 
-- [ ] Create /llms.txt file for AI discoverability
-- [ ] Create dynamic route for individual card pages (/cards/[id])
-- [ ] Create dynamic route for set pages (/sets/[slug])
-- [ ] Create price pages with eBay data (/prices/[card-slug])
-- [ ] Create graded price pages (/prices/[card-slug]/psa-10, etc.)
-- [ ] Add JSON-LD structured data (Product schema with price)
-- [ ] Add meta tags (title, description, og:image) to card pages
-- [ ] Create sitemap.xml generation
-- [ ] Create robots.txt
-- [ ] Add "last updated" timestamps to price pages (signals freshness to Google)
+- [x] Create /llms.txt file for AI discoverability
+- [x] Create dynamic route for individual card pages (/cards/[id])
+- [x] Create dynamic route for set pages (/sets/[slug])
+- [ ] Create price pages with eBay data (/prices/[card-slug]) - DEFERRED: waiting for pricing database
+- [ ] Create graded price pages (/prices/[card-slug]/psa-10, etc.) - DEFERRED: waiting for pricing database
+- [x] Add JSON-LD structured data (Product schema with price)
+- [x] Add meta tags (title, description, og:image) to card pages
+- [x] Create sitemap.xml generation
+- [x] Create robots.txt
+- [ ] Add "last updated" timestamps to price pages - DEFERRED: waiting for pricing database
 
 ### Human Tasks
 
@@ -226,11 +226,11 @@ Use ISR (Incremental Static Regeneration) with revalidate: 86400 (daily) for pri
 
 ### Agent Tasks
 
-- [ ] Create /docs page with API documentation
-- [ ] Create /pricing page with tier comparison
-- [ ] Create grading guides (/guides/psa-grading, /guides/bgs-grading, /guides/cgc-grading)
-- [ ] Create "what grade should I get" guide
-- [ ] Add structured data to homepage
+- [x] Create /docs page with API documentation
+- [x] Create /pricing page with tier comparison
+- [x] Create grading guides (/guides/psa-grading, /guides/bgs-grading, /guides/cgc-grading)
+- [x] Create "what grade should I get" guide
+- [x] Add structured data to homepage
 
 ### Human Tasks
 

@@ -1,0 +1,89 @@
+# Pokemon Card API
+
+> A comprehensive Pokemon Trading Card Game database API with 22,755 cards across all sets.
+
+## What This API Does
+
+- Search Pokemon cards by name, set, rarity, card number, and holo type
+- Get detailed card metadata: HP, types, illustrator, images
+- Browse all sets and rarities
+- Access high-resolution card images
+
+## Database Stats
+
+- 22,755 total cards
+- All official TCG sets from Base Set to present
+- Card images hosted on TCGdex CDN
+- Updated regularly with new releases
+
+## API Endpoints
+
+Base URL: https://pokecardapi.com/api
+
+### Search Cards
+GET /api/cards/search?q={query}&set={set}&rarity={rarity}&number={number}&holo={holo}&limit={limit}
+
+Parameters:
+- q: Search query (card name, can include number like "charizard 4" or "pikachu 25/102")
+- set: Filter by set name
+- rarity: Filter by rarity (Common, Uncommon, Rare, Rare Holo, etc.)
+- number: Filter by card number
+- holo: Filter by holo type (holo, reverse, non-holo)
+- limit: Max results (default 10)
+
+Example: /api/cards/search?q=charizard&set=base%20set&limit=5
+
+### Get Single Card
+GET /api/cards/{tcgdex_id}
+
+Example: /api/cards/base1-4 (Base Set Charizard)
+
+### List All Sets
+GET /api/sets
+
+Returns array of all set names.
+
+### List All Rarities
+GET /api/rarities
+
+Returns array of all rarity types.
+
+## Card Data Structure
+
+{
+  "tcgdex_id": "base1-4",
+  "name": "Charizard",
+  "set_name": "Base Set",
+  "local_id": "4",
+  "rarity": "Rare Holo",
+  "image_url": "https://assets.tcgdex.net/en/base/base1/4",
+  "category": "Pokemon",
+  "hp": 120,
+  "types": "[\"Fire\"]",
+  "illustrator": "Mitsuhiro Arita",
+  "has_holo": 1,
+  "has_reverse": 0
+}
+
+## Example Queries
+
+Search for Pikachu cards:
+/api/cards/search?q=pikachu
+
+Search for Base Set holos:
+/api/cards/search?set=base%20set&holo=holo
+
+Search by card number:
+/api/cards/search?q=charizard%204
+
+Get all Rare Holo cards:
+/api/cards/search?rarity=rare%20holo&limit=50
+
+## Access
+
+Free tier: 10 results per search
+Full API access available via RapidAPI
+
+## Contact
+
+API documentation: https://pokecardapi.com/docs

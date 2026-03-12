@@ -267,3 +267,62 @@ export async function getAllRarities(): Promise<string[]> {
   `
   return result.map(row => row.rarity as string)
 }
+
+export async function getCardsBySet(setName: string, limit: number = 200): Promise<Card[]> {
+  const sql = getDb()
+  const result = await sql`
+    SELECT * FROM tcgdex_cards
+    WHERE set_name_lower = ${setName.toLowerCase()}
+    ORDER BY
+      CASE WHEN local_id ~ '^[0-9]+$' THEN CAST(local_id AS INTEGER) ELSE 9999 END,
+      local_id
+    LIMIT ${limit}
+  `
+  return result as Card[]
+}
+
+export async function getSetBySlug(slug: string): Promise<string | null> {
+  const sql = getDb()
+  // Convert slug back to potential set name and find match
+  const searchTerm = slug.replace(/-/g, ' ')
+  const result = await sql`
+    SELECT DISTINCT set_name FROM tcgdex_cards
+    WHERE LOWER(REPLACE(set_name, ' ', '-')) = ${slug}
+       OR LOWER(set_name) = ${searchTerm}
+    LIMIT 1
+  `
+  return result[0]?.set_name as string || null
+}
+
+export async function getAllCardIds(): Promise<string[]> {
+  const sql = getDb()
+  const result = await sql`
+    SELECT tcgdex_id FROM tcgdex_cards
+    ORDER BY name, set_name
+  `
+  return result.map(row => row.tcgdex_id as string)
+}
+
+export async function getPopularCards(limit: number = 100): Promise<Card[]> {
+  const sql = getDb()
+  // Get cards that are likely popular for pricing pages
+  const result = await sql`
+    SELECT * FROM tcgdex_cards
+    WHERE name_lower IN (
+      'charizard', 'pikachu', 'mewtwo', 'blastoise', 'venusaur',
+      'gengar', 'dragonite', 'mew', 'gyarados', 'snorlax',
+      'eevee', 'lugia', 'ho-oh', 'rayquaza', 'umbreon',
+      'espeon', 'mew', 'celebi', 'jirachi', 'deoxys'
+    )
+    AND rarity LIKE '%Rare%'
+    ORDER BY
+      CASE
+        WHEN set_name = 'Base Set' THEN 0
+        WHEN rarity = 'Rare Holo' THEN 1
+        ELSE 2
+      END,
+      name
+    LIMIT ${limit}
+  `
+  return result as Card[]
+}
